@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Singapore Private Residential Market Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">REALIS-derived analyst dashboard</p>
+      <h1>Singapore Private Residential Market</h1>
+      <p class="subtitle">Price momentum, liquidity, stock intensity, and 99-year leasehold expiry risk — aggregated for a light static dashboard.</p>
+    </div>
+    <div class="meta-card" id="metaCard">Loading…</div>
+  </header>
+
+  <main>
+    <section class="controls card">
+      <label>Market segment
+        <select id="segmentFilter"><option value="All">All</option></select>
+      </label>
+      <label>Property type
+        <select id="propertyFilter"><option value="All">All</option></select>
+      </label>
+      <label>Sale type
+        <select id="saleFilter"><option value="All">All</option></select>
+      </label>
+      <label>Project search
+        <input id="projectSearch" placeholder="e.g. Lentor, Mayfair, Treasures" />
+      </label>
+    </section>
+
+    <section class="grid kpis" id="kpis"></section>
+
+    <section class="grid two">
+      <div class="card">
+        <div class="section-head"><h2>Price & liquidity trend</h2><p>Monthly median PSF and transaction volume</p></div>
+        <canvas id="trendChart" height="240"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>Segment view</h2><p>CCR / RCR / OCR transaction share and median PSF</p></div>
+        <div id="segmentBars" class="bars"></div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <div class="section-head"><h2>Active non-landed stock</h2><p>Units by property type from project-level stock</p></div>
+        <div id="stockBars" class="bars"></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>99-year leasehold expiry wall</h2><p>Matched active non-landed units by expiry decade</p></div>
+        <div id="expiryBars" class="bars"></div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <div class="section-head"><h2>Stock-adjusted segment activity</h2><p>12-month transactions per 1,000 active stock units</p></div>
+        <div id="segmentTurnover" class="table-wrap"></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>Top project turnover leaders</h2><p>Highest 12-month turnover intensity among matched-stock projects</p></div>
+        <div id="projectTurnoverLeaders" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><h2>99-year expiry cohort projects</h2><p>Largest active non-landed projects by lease-expiry cohort</p></div>
+      <div id="expiryProjectTable" class="table-wrap"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><h2>Planning area ranking</h2><p>Largest markets by transaction volume</p></div>
+      <div id="areaRanking" class="table-wrap"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><h2>Project screener</h2><p>Aggregated project metrics only — no address-level rows loaded</p></div>
+      <div id="projectTable" class="table-wrap"></div>
+    </section>
+
+    <section class="card muted">
+      <h2>Methodology notes</h2>
+      <ul id="methodology"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

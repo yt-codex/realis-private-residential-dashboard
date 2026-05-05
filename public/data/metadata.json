@@ -1,0 +1,21 @@
+{
+  "generated_at_utc": "2026-05-05T16:19:19.958052+00:00",
+  "transaction_csv_count": 375,
+  "transaction_rows": 702457,
+  "transaction_source": "data/realis_residential_transactions_monthly/*.csv",
+  "source_vintage": {
+    "transactions_first_month": "1995-01",
+    "transactions_latest_month": "2026-03",
+    "stock_filename": "realis_residential_stock_project_property_type_latest_2026q1_scraped.csv",
+    "leasehold_filename": "realis_active_99y_nonlanded_units_by_project_latest_2026q1.csv"
+  },
+  "latest_transaction_month": "2026-03",
+  "stock_source": "data/realis_residential_stock_project_property_type_latest_2026q1_scraped.csv",
+  "leasehold_source": "data/realis_active_99y_nonlanded_units_by_project_latest_2026q1.csv",
+  "emitted_files": [
+    "dashboard-data.json",
+    "metadata.json"
+  ],
+  "privacy": "Aggregated dashboard JSON only; no address-level transaction rows emitted.",
+  "market_segment_method": "CCR = postal districts 09/10/11 or Downtown Core/Sentosa; RCR = other Central Region; OCR = non-Central regions; Unknown fallback. Proxy, not official URA market-segment field."
+}
