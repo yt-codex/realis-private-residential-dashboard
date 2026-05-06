@@ -32,6 +32,8 @@
       </label>
     </section>
 
+    <section class="card muted" id="filterNotice" hidden></section>
+
     <section class="tab-nav card">
       <button type="button" class="tab-btn active" data-tab-target="market">Market</button>
       <button type="button" class="tab-btn" data-tab-target="activity">Activity</button>
@@ -52,7 +54,7 @@
       </div>
     </section>
 
-    <section class="grid two tab-panel" data-tab="activity">
+    <section class="grid two tab-panel" data-tab="activity" data-global-only="true">
       <div class="card">
         <div class="section-head"><h2>Active non-landed stock</h2><p>Units by property type from project-level stock</p></div>
         <div id="stockBars" class="bars"></div>
@@ -63,14 +65,14 @@
       </div>
     </section>
 
-    <section class="grid two tab-panel" data-tab="activity">
+    <section class="grid two tab-panel" data-tab="activity" data-global-only="true">
       <div class="card">
         <div class="section-head"><h2>Top project turnover leaders</h2><p>Highest 12-month turnover intensity among matched-stock projects</p></div>
         <div id="projectTurnoverLeaders" class="table-wrap"></div>
       </div>
     </section>
 
-    <section class="card tab-panel" data-tab="projects">
+    <section class="card tab-panel" data-tab="projects" data-global-only="true">
       <div class="section-head"><h2>Planning area ranking</h2><p>Largest markets by transaction volume</p></div>
       <div id="areaRanking" class="table-wrap"></div>
     </section>
@@ -80,14 +82,14 @@
       <div id="projectTable" class="table-wrap"></div>
     </section>
 
-    <section class="grid two tab-panel" data-tab="leasehold">
+    <section class="grid two tab-panel" data-tab="leasehold" data-global-only="true">
       <div class="card">
         <div class="section-head"><h2>99-year leasehold expiry wall</h2><p>Matched active non-landed units by expiry decade</p></div>
         <div id="expiryBars" class="bars"></div>
       </div>
     </section>
 
-    <section class="card tab-panel" data-tab="leasehold">
+    <section class="card tab-panel" data-tab="leasehold" data-global-only="true">
       <div class="section-head"><h2>99-year expiry cohort projects</h2><p>Largest active non-landed projects by lease-expiry cohort</p></div>
       <div id="expiryProjectTable" class="table-wrap"></div>
     </section>

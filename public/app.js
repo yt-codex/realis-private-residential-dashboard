@@ -50,8 +50,18 @@ function fillFilters(){
 }
 function addOptions(id, opts){ const el=document.getElementById(id); opts.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o; el.appendChild(op); }); }
 function filters(){ return {seg:document.getElementById('segmentFilter').value, prop:document.getElementById('propertyFilter').value, sale:document.getElementById('saleFilter').value, q:document.getElementById('projectSearch').value.trim().toLowerCase()}; }
+function hasStructuredFilter(){ const f = filters(); return f.seg !== 'All' || f.prop !== 'All' || f.sale !== 'All'; }
 
-function renderAll(){ renderKpis(); renderTrend(); renderBars(); renderAreaRanking(); renderTurnoverTables(); renderExpiryTable(); renderProjectTable(); }
+function renderAll(){ renderVisibility(); renderKpis(); renderTrend(); renderBars(); renderAreaRanking(); renderTurnoverTables(); renderExpiryTable(); renderProjectTable(); }
+
+function renderVisibility(){
+  const filtered = hasStructuredFilter();
+  const notice = document.getElementById('filterNotice');
+  notice.hidden = !filtered;
+  notice.innerHTML = filtered ? '<strong>Filtered view:</strong> aggregate-only sections are hidden while segment, property type, or sale type filters are active.' : '';
+  document.querySelectorAll('[data-global-only="true"]').forEach(panel => { panel.hidden = filtered || panel.dataset.tab !== ACTIVE_TAB; });
+  if(filtered && !['market', 'projects'].includes(ACTIVE_TAB)) setActiveTab('market');
+}
 
 function selectedMonthly(){
   const f=filters();
@@ -126,20 +136,20 @@ function renderBars(){
 
 function renderTurnoverTables(){
   const activity = DATA.stock_adjusted_activity || {};
-  const segRows = activity.segment_turnover_summary || [];
-  document.getElementById('segmentTurnover').innerHTML = table(['Segment','Matched projects','Stock','12m Tx','Turnover /1k'], segRows.map(r=>[r.segment,num(r.matched_projects),num(r.stock_units),num(r.recent_12m_transactions),r.turnover_per_1000_stock_12m ?? '—']), [1,2,3,4]);
-  const leaders = (activity.top_project_turnover_leaders || []).slice(0,25);
-  document.getElementById('projectTurnoverLeaders').innerHTML = table(['Project','Segment','Area','Stock','12m Tx','Turnover /1k'], leaders.map(r=>[r.project,r.segment,r.planning_area,num(r.stock_units),num(r.recent_12m_transactions),r.turnover_per_1000_stock_12m ?? '—']), [3,4,5]);
+  const segRows = (activity.segment_turnover_summary || []).filter(r => r.segment !== 'All').slice(0,5);
+  document.getElementById('segmentTurnover').innerHTML = `<div class="bars">${barHtml(segRows, r=>r.segment, r=>r.turnover_per_1000_stock_12m || 0, r=>`${r.turnover_per_1000_stock_12m ?? '—'} /1k • ${num(r.recent_12m_transactions)} tx`)}</div>`;
+  const leaders = (activity.top_project_turnover_leaders || []).slice(0,5);
+  document.getElementById('projectTurnoverLeaders').innerHTML = `<div class="bars">${barHtml(leaders, r=>r.project, r=>r.turnover_per_1000_stock_12m || 0, r=>`${r.turnover_per_1000_stock_12m ?? '—'} /1k • ${num(r.recent_12m_transactions)} tx`)}</div>`;
 }
 
 function renderExpiryTable(){
-  const rows = (DATA.lease_expiry.projects || DATA.lease_expiry.top_projects || []).slice(0,60);
+  const rows = (DATA.lease_expiry.projects || DATA.lease_expiry.top_projects || []).slice(0,5);
   document.getElementById('expiryProjectTable').innerHTML = table(['Project','Type','Expiry','Decade','Units','Enbloc'], rows.map(r=>[r.project,r.property_type,r.lease_expiry,r.decade,num(r.units),r.enbloc_indicator || '—']), [2,4]);
 }
 
 function renderAreaRanking(){
-  const rows=DATA.planning_area_ranking.slice(0,20);
-  document.getElementById('areaRanking').innerHTML = table(['Planning area','Tx','Median PSF','Value'], rows.map(r=>[r.planning_area,num(r.transactions),psf(r.median),money(r.value)]), [1,2,3]);
+  const rows=DATA.planning_area_ranking.slice(0,5);
+  document.getElementById('areaRanking').innerHTML = `<div class="bars">${barHtml(rows, r=>r.planning_area, r=>r.transactions, r=>`${num(r.transactions)} • ${psf(r.median)}`)}</div>`;
 }
 function renderProjectTable(){
   const f=filters();
@@ -148,7 +158,7 @@ function renderProjectTable(){
   if(f.prop!=='All') rows=rows.filter(r=>r.dominant_property_type===f.prop || r.property_type_mix?.[f.prop]);
   if(f.sale!=='All') rows=rows.filter(r=>r.sale_type_mix?.[f.sale]);
   if(f.q) rows=rows.filter(r=>r.project.toLowerCase().includes(f.q) || (r.planning_area||'').toLowerCase().includes(f.q));
-  rows=rows.slice(0,120);
+  rows=rows.slice(0,5);
   document.getElementById('projectTable').innerHTML = table(['Project','Segment','Area','Stock','12m Tx','Turnover /1k','12m Median PSF'], rows.map(r=>[r.project,r.segment,r.planning_area,num(r.stock_units),num(r.recent_12m_transactions),r.turnover_per_1000_stock_12m ?? '—',psf(r.recent_12m_median_psf)]), [3,4,5,6]);
 }
 function table(headers, rows, numeric=[]){ return `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((c,i)=>`<td class="${numeric.includes(i)?'num':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
