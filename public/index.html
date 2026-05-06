@@ -33,6 +33,7 @@
     </section>
 
     <section class="card muted" id="filterNotice" hidden></section>
+    <section class="card" id="filterSummary"></section>
 
     <section class="tab-nav card">
       <button type="button" class="tab-btn active" data-tab-target="market">Market</button>
@@ -75,6 +76,17 @@
     <section class="card tab-panel" data-tab="projects" data-global-only="true">
       <div class="section-head"><h2>Planning area ranking</h2><p>Largest markets by transaction volume</p></div>
       <div id="areaRanking" class="table-wrap"></div>
+    </section>
+
+    <section class="grid two tab-panel" data-tab="projects">
+      <div class="card">
+        <div class="section-head"><h2>Top filtered turnover leaders</h2><p>Highest turnover intensity inside the current project filter</p></div>
+        <div id="projectTurnoverChart" class="bars"></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>Top filtered median PSF</h2><p>Highest 12-month median PSF inside the current project filter</p></div>
+        <div id="projectPsfChart" class="bars"></div>
+      </div>
     </section>
 
     <section class="card tab-panel" data-tab="projects">

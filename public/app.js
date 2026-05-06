@@ -52,7 +52,7 @@ function addOptions(id, opts){ const el=document.getElementById(id); opts.forEac
 function filters(){ return {seg:document.getElementById('segmentFilter').value, prop:document.getElementById('propertyFilter').value, sale:document.getElementById('saleFilter').value, q:document.getElementById('projectSearch').value.trim().toLowerCase()}; }
 function hasStructuredFilter(){ const f = filters(); return f.seg !== 'All' || f.prop !== 'All' || f.sale !== 'All'; }
 
-function renderAll(){ renderVisibility(); renderKpis(); renderTrend(); renderBars(); renderAreaRanking(); renderTurnoverTables(); renderExpiryTable(); renderProjectTable(); }
+function renderAll(){ renderVisibility(); renderFilterSummary(); renderKpis(); renderTrend(); renderBars(); renderAreaRanking(); renderTurnoverTables(); renderExpiryTable(); renderProjectCharts(); renderProjectTable(); }
 
 function renderVisibility(){
   const filtered = hasStructuredFilter();
@@ -76,16 +76,74 @@ function selectedMonthly(){
 
 function selectedLatest12Summary(){
   const f = filters();
-  return (DATA.latest_12m_filter_summary || []).find(d => d.segment === f.seg && d.property_type === f.prop && d.sale_type === f.sale) || DATA.market_pulse.latest_12m_metrics;
+  return (DATA.latest_12m_filter_summary || []).find(d => d.segment === f.seg && d.property_type === f.prop && d.sale_type === f.sale) || null;
+}
+
+function selectedSaleMix(){
+  const f = filters();
+  return ['New Sale','Resale','Sub Sale'].map(saleType => {
+    if(f.sale !== 'All' && f.sale !== saleType) return {sale_type: saleType, transactions: 0, transaction_share: 0};
+    const row = (DATA.latest_12m_filter_summary || []).find(d => d.segment === f.seg && d.property_type === f.prop && d.sale_type === saleType);
+    return row ? {sale_type: saleType, transactions: row.transactions, transaction_share: null} : {sale_type: saleType, transactions: 0, transaction_share: 0};
+  }).map(row => {
+    const total = ['New Sale','Resale','Sub Sale'].reduce((sum, saleType) => {
+      const hit = (DATA.latest_12m_filter_summary || []).find(d => d.segment === f.seg && d.property_type === f.prop && d.sale_type === saleType && (f.sale === 'All' || saleType === f.sale));
+      return sum + (hit?.transactions || 0);
+    }, 0);
+    return {...row, transaction_share: total ? row.transactions / total : 0};
+  });
+}
+
+function selectedProjectRows(){
+  const f=filters();
+  let rows=DATA.project_screener;
+  if(f.seg!=='All') rows=rows.filter(r=>r.segment===f.seg);
+  if(f.prop!=='All') rows=rows.filter(r=>r.dominant_property_type===f.prop || r.property_type_mix?.[f.prop]);
+  if(f.sale!=='All') rows=rows.filter(r=>r.sale_type_mix?.[f.sale]);
+  if(f.q) rows=rows.filter(r=>r.project.toLowerCase().includes(f.q) || (r.planning_area||'').toLowerCase().includes(f.q));
+  return rows;
+}
+
+function renderFilterSummary(){
+  const f = filters();
+  const m = selectedLatest12Summary();
+  const tokens = [
+    ['Segment', f.seg],
+    ['Property type', f.prop],
+    ['Sale type', f.sale],
+    ['Project search', f.q || 'All'],
+  ];
+  document.getElementById('filterSummary').innerHTML = `
+    <div class="section-head">
+      <h2>Filter summary</h2>
+      <p>${m ? `${num(m.transactions)} transactions in the current 12-month filtered set` : 'No matching transactions for the current structured filter'}</p>
+    </div>
+    <div class="filter-chips">${tokens.map(([label, value]) => `<span class="filter-chip"><strong>${label}:</strong> ${value}</span>`).join('')}</div>
+  `;
 }
 
 function renderKpis(){
   const monthlyRows = selectedMonthly();
   const m = selectedLatest12Summary();
-  const lm = monthlyRows.at(-1) || DATA.market_pulse.latest_month_metrics;
-  const saleMix = Object.fromEntries((DATA.market_pulse.latest_12m_sale_mix||[]).map(d=>[d.sale_type,d]));
+  const lm = monthlyRows.at(-1) || null;
+  const saleMix = Object.fromEntries(selectedSaleMix().map(d=>[d.sale_type,d]));
+  if(!m || !lm){
+    const cards = [
+      ['Latest month volume', '—', 'No matching data'],
+      ['Latest month median PSF', '—', 'No matching data'],
+      ['12m transaction volume', '—', 'No matching data'],
+      ['12m median PSF', '—', 'No matching data'],
+      ['12m transaction value', '—', 'No matching data'],
+      ['Non-landed share', '—', 'Current filter has no rows'],
+      ['12m new-sale mix', '—', 'No matching data'],
+      ['12m resale mix', '—', 'No matching data'],
+      ['12m subsale mix', '—', 'No matching data'],
+    ];
+    document.getElementById('kpis').innerHTML = cards.map(c=>`<div class="card kpi"><div class="label">${c[0]}</div><div class="value">${c[1]}</div><div class="sub">${c[2]}</div></div>`).join('');
+    return;
+  }
   const cards = [
-    ['Latest month volume', num(lm.transactions), monthlyRows.at(-1)?.month || DATA.market_pulse.latest_month],
+    ['Latest month volume', num(lm.transactions), monthlyRows.at(-1)?.month],
     ['Latest month median PSF', psf(lm.median), `IQR ${psf(lm.p25)}–${psf(lm.p75)}`],
     ['12m transaction volume', num(m.transactions), `${num(m.units)} units transacted`],
     ['12m median PSF', psf(m.median), `IQR ${psf(m.p25)}–${psf(m.p75)}`],
@@ -107,6 +165,12 @@ function renderTrend(){
   ctx.scale(devicePixelRatio, devicePixelRatio);
   ctx.clearRect(0,0,w,h);
   const cw=canvas.clientWidth, ch=240, pad=34;
+  if(!rows.length){
+    ctx.fillStyle='#91a3bb';
+    ctx.font='14px system-ui';
+    ctx.fillText('No matching monthly data for this filter.', pad, ch / 2);
+    return;
+  }
   const vols = rows.map(d=>d.transactions), prices=rows.map(d=>d.median||0);
   const maxV=Math.max(...vols,1), maxP=Math.max(...prices,1), minP=Math.min(...prices.filter(Boolean),0);
   ctx.strokeStyle='#1f3352'; ctx.lineWidth=1; for(let i=0;i<5;i++){let y=pad+i*(ch-pad*2)/4; ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(cw-pad,y);ctx.stroke();}
@@ -161,7 +225,7 @@ function renderBars(){
     (f.seg === 'All' || r.segment === f.seg)
   );
   const fallbackSegmentRows = DATA.segment_summary.filter(r => f.seg === 'All' || r.segment === f.seg);
-  const segmentChartRows = segmentRows.length ? segmentRows : fallbackSegmentRows;
+  const segmentChartRows = segmentRows.length ? segmentRows : (hasStructuredFilter() ? [] : fallbackSegmentRows);
   document.getElementById('segmentBars').innerHTML = donutHtml(segmentChartRows, r=>r.segment, r=>r.transactions, r=>`${pct(r.transactions / segmentChartRows.reduce((sum, row) => sum + row.transactions, 0))} • ${psf(r.median)}`);
   document.getElementById('stockBars').innerHTML = donutHtml(DATA.stock.by_type, r=>r.property_type, r=>r.units, r=>`${num(r.units)} units`);
   document.getElementById('expiryBars').innerHTML = barHtml(DATA.lease_expiry.by_decade, r=>r.decade, r=>r.units, r=>num(r.units));
@@ -184,15 +248,16 @@ function renderAreaRanking(){
   const rows=DATA.planning_area_ranking.slice(0,5);
   document.getElementById('areaRanking').innerHTML = `<div class="bars">${barHtml(rows, r=>r.planning_area, r=>r.transactions, r=>`${num(r.transactions)} • ${psf(r.median)}`)}</div>`;
 }
+function renderProjectCharts(){
+  const rows = selectedProjectRows();
+  const turnoverRows = rows.filter(r => r.turnover_per_1000_stock_12m != null).sort((a,b) => b.turnover_per_1000_stock_12m - a.turnover_per_1000_stock_12m).slice(0,5);
+  const psfRows = rows.filter(r => r.recent_12m_median_psf != null).sort((a,b) => b.recent_12m_median_psf - a.recent_12m_median_psf).slice(0,5);
+  document.getElementById('projectTurnoverChart').innerHTML = turnoverRows.length ? barHtml(turnoverRows, r=>r.project, r=>r.turnover_per_1000_stock_12m || 0, r=>`${r.turnover_per_1000_stock_12m ?? '—'} /1k • ${num(r.recent_12m_transactions)} tx`) : '<div class="muted">No matching projects.</div>';
+  document.getElementById('projectPsfChart').innerHTML = psfRows.length ? barHtml(psfRows, r=>r.project, r=>r.recent_12m_median_psf || 0, r=>`${psf(r.recent_12m_median_psf)} • ${num(r.recent_12m_transactions)} tx`) : '<div class="muted">No matching projects.</div>';
+}
 function renderProjectTable(){
-  const f=filters();
-  let rows=DATA.project_screener;
-  if(f.seg!=='All') rows=rows.filter(r=>r.segment===f.seg);
-  if(f.prop!=='All') rows=rows.filter(r=>r.dominant_property_type===f.prop || r.property_type_mix?.[f.prop]);
-  if(f.sale!=='All') rows=rows.filter(r=>r.sale_type_mix?.[f.sale]);
-  if(f.q) rows=rows.filter(r=>r.project.toLowerCase().includes(f.q) || (r.planning_area||'').toLowerCase().includes(f.q));
-  rows=rows.slice(0,5);
-  document.getElementById('projectTable').innerHTML = table(['Project','Segment','Area','Stock','12m Tx','Turnover /1k','12m Median PSF'], rows.map(r=>[r.project,r.segment,r.planning_area,num(r.stock_units),num(r.recent_12m_transactions),r.turnover_per_1000_stock_12m ?? '—',psf(r.recent_12m_median_psf)]), [3,4,5,6]);
+  const rows=selectedProjectRows().slice(0,5);
+  document.getElementById('projectTable').innerHTML = rows.length ? table(['Project','Segment','Area','Stock','12m Tx','Turnover /1k','12m Median PSF'], rows.map(r=>[r.project,r.segment,r.planning_area,num(r.stock_units),num(r.recent_12m_transactions),r.turnover_per_1000_stock_12m ?? '—',psf(r.recent_12m_median_psf)]), [3,4,5,6]) : '<div class="muted">No matching projects.</div>';
 }
 function table(headers, rows, numeric=[]){ return `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((c,i)=>`<td class="${numeric.includes(i)?'num':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
 function renderMethodology(){
