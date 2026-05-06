@@ -22,18 +22,21 @@ function init(){
   initTabs();
   fillFilters();
   renderAll();
-  ['segmentFilter','propertyFilter','saleFilter','projectSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderAll));
+  ['segmentFilter','propertyFilter','saleFilter'].forEach(id => document.getElementById(id).addEventListener('change', renderAll));
+  document.getElementById('projectSearch').addEventListener('input', () => { setActiveTab('projects'); renderAll(); });
   renderMethodology();
 }
 
 function initTabs(){
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      ACTIVE_TAB = btn.dataset.tabTarget;
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === btn));
-      document.querySelectorAll('.tab-panel').forEach(panel => { panel.hidden = panel.dataset.tab !== ACTIVE_TAB; });
-    });
+    btn.addEventListener('click', () => setActiveTab(btn.dataset.tabTarget));
   });
+  setActiveTab(ACTIVE_TAB);
+}
+
+function setActiveTab(tab){
+  ACTIVE_TAB = tab;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tabTarget === ACTIVE_TAB));
   document.querySelectorAll('.tab-panel').forEach(panel => { panel.hidden = panel.dataset.tab !== ACTIVE_TAB; });
 }
 
