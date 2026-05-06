@@ -1,10 +1,12 @@
 const fmt = new Intl.NumberFormat('en-SG');
 const money = n => n == null ? '—' : '$' + fmt.format(Math.round(n));
+const moneyM = n => n == null ? '—' : '$' + (n / 1_000_000).toFixed(1) + 'm';
 const num = n => n == null ? '—' : fmt.format(Math.round(n));
 const psf = n => n == null ? '—' : '$' + fmt.format(Math.round(n)) + ' psf';
 const pct = n => n == null ? '—' : (n * 100).toFixed(1) + '%';
 
 let DATA, META;
+let ACTIVE_TAB = 'market';
 
 Promise.all([
   fetch('data/dashboard-data.json').then(r => r.json()),
@@ -17,10 +19,22 @@ function init(){
     <strong>Source vintage</strong><br>${META.source_vintage.transactions_first_month} to ${META.source_vintage.transactions_latest_month}<br><br>
     <strong>Generated</strong><br>${new Date(META.generated_at_utc).toLocaleString()}<br><br>
     <strong>Payload</strong><br>${META.transaction_rows.toLocaleString()} source rows aggregated`;
+  initTabs();
   fillFilters();
   renderAll();
   ['segmentFilter','propertyFilter','saleFilter','projectSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderAll));
   renderMethodology();
+}
+
+function initTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ACTIVE_TAB = btn.dataset.tabTarget;
+      document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === btn));
+      document.querySelectorAll('.tab-panel').forEach(panel => { panel.hidden = panel.dataset.tab !== ACTIVE_TAB; });
+    });
+  });
+  document.querySelectorAll('.tab-panel').forEach(panel => { panel.hidden = panel.dataset.tab !== ACTIVE_TAB; });
 }
 
 function fillFilters(){
@@ -47,16 +61,22 @@ function selectedMonthly(){
   return DATA.monthly;
 }
 
+function selectedLatest12Summary(){
+  const f = filters();
+  return (DATA.latest_12m_filter_summary || []).find(d => d.segment === f.seg && d.property_type === f.prop && d.sale_type === f.sale) || DATA.market_pulse.latest_12m_metrics;
+}
+
 function renderKpis(){
-  const m = DATA.market_pulse.latest_12m_metrics;
-  const lm = DATA.market_pulse.latest_month_metrics;
+  const monthlyRows = selectedMonthly();
+  const m = selectedLatest12Summary();
+  const lm = monthlyRows.at(-1) || DATA.market_pulse.latest_month_metrics;
   const saleMix = Object.fromEntries((DATA.market_pulse.latest_12m_sale_mix||[]).map(d=>[d.sale_type,d]));
   const cards = [
-    ['Latest month volume', num(lm.transactions), DATA.market_pulse.latest_month],
+    ['Latest month volume', num(lm.transactions), monthlyRows.at(-1)?.month || DATA.market_pulse.latest_month],
     ['Latest month median PSF', psf(lm.median), `IQR ${psf(lm.p25)}–${psf(lm.p75)}`],
     ['12m transaction volume', num(m.transactions), `${num(m.units)} units transacted`],
     ['12m median PSF', psf(m.median), `IQR ${psf(m.p25)}–${psf(m.p75)}`],
-    ['12m transaction value', money(m.value), 'Nominal transacted value'],
+    ['12m transaction value', moneyM(m.value), 'Nominal transacted value'],
     ['Non-landed share', pct(DATA.market_pulse.nonlanded_transaction_share_all), 'All transaction rows'],
     ['12m new-sale mix', pct(saleMix['New Sale']?.transaction_share), `${num(saleMix['New Sale']?.transactions)} transactions`],
     ['12m resale mix', pct(saleMix['Resale']?.transaction_share), `${num(saleMix['Resale']?.transactions)} transactions`],
@@ -87,7 +107,16 @@ function barHtml(rows, label, value, sub, max=null){
   return rows.map(r=>`<div class="bar-row"><div class="bar-label" title="${label(r)}">${label(r)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,value(r)/max*100)}%"></div></div><div class="bar-value">${sub(r)}</div></div>`).join('');
 }
 function renderBars(){
-  document.getElementById('segmentBars').innerHTML = barHtml(DATA.segment_summary, r=>r.segment, r=>r.transactions, r=>`${num(r.transactions)} • ${psf(r.median)}`);
+  const f = filters();
+  const segmentRows = (DATA.latest_12m_filter_summary || DATA.segment_summary).filter(r =>
+    (r.segment || r.segment === 'All') &&
+    r.segment !== 'All' &&
+    r.property_type === (f.prop || 'All') &&
+    r.sale_type === (f.sale || 'All') &&
+    (f.seg === 'All' || r.segment === f.seg)
+  );
+  const fallbackSegmentRows = DATA.segment_summary.filter(r => f.seg === 'All' || r.segment === f.seg);
+  document.getElementById('segmentBars').innerHTML = barHtml(segmentRows.length ? segmentRows : fallbackSegmentRows, r=>r.segment, r=>r.transactions, r=>`${num(r.transactions)} • ${psf(r.median)}`);
   document.getElementById('stockBars').innerHTML = barHtml(DATA.stock.by_type, r=>r.property_type, r=>r.units, r=>num(r.units));
   document.getElementById('expiryBars').innerHTML = barHtml(DATA.lease_expiry.by_decade, r=>r.decade, r=>r.units, r=>num(r.units));
 }

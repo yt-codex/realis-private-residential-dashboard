@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-05T16:19:19.958052+00:00",
+  "generated_at_utc": "2026-05-06T01:59:14.513999+00:00",
   "transaction_csv_count": 375,
   "transaction_rows": 702457,
   "transaction_source": "data/realis_residential_transactions_monthly/*.csv",

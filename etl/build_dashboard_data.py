@@ -130,6 +130,7 @@ def main():
     monthly_property = defaultdict(blank_bucket)
     monthly_sale = defaultdict(blank_bucket)
     monthly_filter = defaultdict(blank_bucket)
+    latest12_filter = defaultdict(blank_bucket)
     segment_total = defaultdict(blank_bucket)
     region_total = defaultdict(blank_bucket)
     planning_total = defaultdict(blank_bucket)
@@ -173,6 +174,10 @@ def main():
             add_agg(planning_total[r.get("Planning Area") or "Unknown"], r)
             if month_index >= recent_cutoff:
                 add_agg(latest_12m_sale_mix[sale_type], r)
+                for seg_key in (ALL, seg):
+                    for prop_key in (ALL, pt):
+                        for sale_key in (ALL, sale_type):
+                            add_agg(latest12_filter[(seg_key, prop_key, sale_key)], r)
 
             pn = norm_project(r.get("Project Name"))
             if pn:
@@ -359,6 +364,13 @@ def main():
             for pt in [ALL, *PROPERTY_TYPES, "Unknown"]
             for st in [ALL, *SALE_TYPES, "Unknown"]
             if monthly_filter[(m, s, pt, st)]["transactions"]
+        ],
+        "latest_12m_filter_summary": [
+            {"segment": s, "property_type": pt, "sale_type": st, **finalize_bucket(frozen_bucket(latest12_filter[(s, pt, st)]))}
+            for s in [ALL, *SEGMENTS]
+            for pt in [ALL, *PROPERTY_TYPES, "Unknown"]
+            for st in [ALL, *SALE_TYPES, "Unknown"]
+            if latest12_filter[(s, pt, st)]["transactions"]
         ],
         "segment_summary": [
             {"segment": s, **finalize_bucket(frozen_bucket(segment_total[s]))}

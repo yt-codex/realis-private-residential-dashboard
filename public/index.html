@@ -32,9 +32,16 @@
       </label>
     </section>
 
-    <section class="grid kpis" id="kpis"></section>
+    <section class="tab-nav card">
+      <button class="tab-btn active" data-tab-target="market">Market</button>
+      <button class="tab-btn" data-tab-target="activity">Activity</button>
+      <button class="tab-btn" data-tab-target="projects">Projects</button>
+      <button class="tab-btn" data-tab-target="leasehold">Leasehold</button>
+    </section>
 
-    <section class="grid two">
+    <section class="grid kpis tab-panel" id="kpis" data-tab="market"></section>
+
+    <section class="grid two tab-panel" data-tab="market">
       <div class="card">
         <div class="section-head"><h2>Price & liquidity trend</h2><p>Monthly median PSF and transaction volume</p></div>
         <canvas id="trendChart" height="240"></canvas>
@@ -45,41 +52,44 @@
       </div>
     </section>
 
-    <section class="grid two">
+    <section class="grid two tab-panel" data-tab="activity">
       <div class="card">
         <div class="section-head"><h2>Active non-landed stock</h2><p>Units by property type from project-level stock</p></div>
         <div id="stockBars" class="bars"></div>
       </div>
       <div class="card">
-        <div class="section-head"><h2>99-year leasehold expiry wall</h2><p>Matched active non-landed units by expiry decade</p></div>
-        <div id="expiryBars" class="bars"></div>
-      </div>
-    </section>
-
-    <section class="grid two">
-      <div class="card">
         <div class="section-head"><h2>Stock-adjusted segment activity</h2><p>12-month transactions per 1,000 active stock units</p></div>
         <div id="segmentTurnover" class="table-wrap"></div>
       </div>
+    </section>
+
+    <section class="grid two tab-panel" data-tab="activity">
       <div class="card">
         <div class="section-head"><h2>Top project turnover leaders</h2><p>Highest 12-month turnover intensity among matched-stock projects</p></div>
         <div id="projectTurnoverLeaders" class="table-wrap"></div>
       </div>
     </section>
 
-    <section class="card">
-      <div class="section-head"><h2>99-year expiry cohort projects</h2><p>Largest active non-landed projects by lease-expiry cohort</p></div>
-      <div id="expiryProjectTable" class="table-wrap"></div>
-    </section>
-
-    <section class="card">
+    <section class="card tab-panel" data-tab="projects">
       <div class="section-head"><h2>Planning area ranking</h2><p>Largest markets by transaction volume</p></div>
       <div id="areaRanking" class="table-wrap"></div>
     </section>
 
-    <section class="card">
+    <section class="card tab-panel" data-tab="projects">
       <div class="section-head"><h2>Project screener</h2><p>Aggregated project metrics only — no address-level rows loaded</p></div>
       <div id="projectTable" class="table-wrap"></div>
+    </section>
+
+    <section class="grid two tab-panel" data-tab="leasehold">
+      <div class="card">
+        <div class="section-head"><h2>99-year leasehold expiry wall</h2><p>Matched active non-landed units by expiry decade</p></div>
+        <div id="expiryBars" class="bars"></div>
+      </div>
+    </section>
+
+    <section class="card tab-panel" data-tab="leasehold">
+      <div class="section-head"><h2>99-year expiry cohort projects</h2><p>Largest active non-landed projects by lease-expiry cohort</p></div>
+      <div id="expiryProjectTable" class="table-wrap"></div>
     </section>
 
     <section class="card muted">
