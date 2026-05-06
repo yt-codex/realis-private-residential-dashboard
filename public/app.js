@@ -119,6 +119,38 @@ function barHtml(rows, label, value, sub, max=null){
   max = max || Math.max(...rows.map(value),1);
   return rows.map(r=>`<div class="bar-row"><div class="bar-label" title="${label(r)}">${label(r)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,value(r)/max*100)}%"></div></div><div class="bar-value">${sub(r)}</div></div>`).join('');
 }
+function donutHtml(rows, label, value, sub){
+  const palette = ['#67e8f9','#a78bfa','#34d399','#fbbf24','#fb7185','#60a5fa'];
+  const total = rows.reduce((sum, row) => sum + (value(row) || 0), 0);
+  if(!total) return '<div class="muted">No data for this view.</div>';
+  const circumference = 2 * Math.PI * 42;
+  let offset = 0;
+  const arcs = rows.map((row, index) => {
+    const share = (value(row) || 0) / total;
+    const length = Math.max(0, share * circumference);
+    const arc = `<circle cx="60" cy="60" r="42" fill="none" stroke="${palette[index % palette.length]}" stroke-width="14" stroke-linecap="butt" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"></circle>`;
+    offset += length;
+    return arc;
+  }).join('');
+  const legend = rows.map((row, index) => `
+    <div class="donut-legend-row">
+      <span class="donut-swatch" style="background:${palette[index % palette.length]}"></span>
+      <span class="donut-label">${label(row)}</span>
+      <span class="donut-value">${sub(row)}</span>
+    </div>
+  `).join('');
+  return `
+    <div class="donut-wrap">
+      <svg class="donut-chart" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="42" fill="none" stroke="#152640" stroke-width="14"></circle>
+        ${arcs}
+        <text x="60" y="56" text-anchor="middle" class="donut-total">${num(total)}</text>
+        <text x="60" y="72" text-anchor="middle" class="donut-caption">total</text>
+      </svg>
+      <div class="donut-legend">${legend}</div>
+    </div>
+  `;
+}
 function renderBars(){
   const f = filters();
   const segmentRows = (DATA.latest_12m_filter_summary || DATA.segment_summary).filter(r =>
@@ -129,8 +161,9 @@ function renderBars(){
     (f.seg === 'All' || r.segment === f.seg)
   );
   const fallbackSegmentRows = DATA.segment_summary.filter(r => f.seg === 'All' || r.segment === f.seg);
-  document.getElementById('segmentBars').innerHTML = barHtml(segmentRows.length ? segmentRows : fallbackSegmentRows, r=>r.segment, r=>r.transactions, r=>`${num(r.transactions)} • ${psf(r.median)}`);
-  document.getElementById('stockBars').innerHTML = barHtml(DATA.stock.by_type, r=>r.property_type, r=>r.units, r=>num(r.units));
+  const segmentChartRows = segmentRows.length ? segmentRows : fallbackSegmentRows;
+  document.getElementById('segmentBars').innerHTML = donutHtml(segmentChartRows, r=>r.segment, r=>r.transactions, r=>`${pct(r.transactions / segmentChartRows.reduce((sum, row) => sum + row.transactions, 0))} • ${psf(r.median)}`);
+  document.getElementById('stockBars').innerHTML = donutHtml(DATA.stock.by_type, r=>r.property_type, r=>r.units, r=>`${num(r.units)} units`);
   document.getElementById('expiryBars').innerHTML = barHtml(DATA.lease_expiry.by_decade, r=>r.decade, r=>r.units, r=>num(r.units));
 }
 
