@@ -64,6 +64,11 @@ def norm_project(name: str) -> str:
     return s
 
 
+def is_fake_project(name: str) -> bool:
+    s = norm_project(name)
+    return not s or s in {"N.A.", "N A", "NA", "N/A", "-", "UNKNOWN"}
+
+
 def market_segment(postal_district: str, planning_region: str, planning_area: str) -> str:
     """Transparent proxy, not official URA segment field."""
     district = str(postal_district or "").zfill(2)[-2:]
@@ -148,6 +153,7 @@ def main():
     recent_cutoff = latest_index - 11
     total_rows = 0
     nonlanded_rows = 0
+    fake_project_rows = Counter()
     latest_12m_sale_mix = defaultdict(blank_bucket)
 
     for path in tx_files:
@@ -179,8 +185,11 @@ def main():
                         for sale_key in (ALL, sale_type):
                             add_agg(latest12_filter[(seg_key, prop_key, sale_key)], r)
 
-            pn = norm_project(r.get("Project Name"))
-            if pn:
+            pn_raw = r.get("Project Name")
+            pn = norm_project(pn_raw)
+            if is_fake_project(pn_raw):
+                fake_project_rows[pn or "<blank>"] += 1
+            elif pn:
                 p = project[pn]
                 p["transactions"] += 1
                 p["value"] += clean_num(r.get("Transacted Price ($)"))
@@ -221,6 +230,7 @@ def main():
     # Lease expiry wall.
     expiry_decades = defaultdict(lambda: {"units": 0, "projects": 0})
     expiry_projects = []
+    lease_by_project = {}
     for r in read_csv(LEASE_CSV):
         units = clean_int(r.get("Number of units"))
         expiry = clean_int(r.get("Lease Expiry"))
@@ -237,12 +247,20 @@ def main():
             "decade": decade,
             "enbloc_indicator": r.get("Enbloc indicator"),
         })
+        lease_by_project[norm_project(r.get("Project Name"))] = {
+            "lease_expiry": expiry,
+            "lease_expiry_decade": decade,
+            "leasehold_units": units,
+            "leasehold_property_type": r.get("Property Type"),
+            "enbloc_indicator": r.get("Enbloc indicator"),
+        }
     expiry_projects.sort(key=lambda x: (x["lease_expiry"], -x["units"], x["project"]))
 
     # Project table: aggregated, no addresses.
     project_rows = []
     for pn, p in project.items():
         stock = stock_by_project.get(pn, {"total": 0, "apartment": 0, "condominium": 0, "executive_condominium": 0})
+        lease = lease_by_project.get(pn, {})
         recent_psf = summarize_psf(p["recent_psf"])
         all_psf = summarize_psf(p["psf"])
         project_rows.append({
@@ -253,23 +271,42 @@ def main():
             "postal_district": p["postal_district"],
             "transactions": p["transactions"],
             "recent_12m_transactions": p["recent_12m_transactions"],
+            "recent_12m_value": round(p["recent_12m_value"], 0),
             "recent_12m_median_psf": recent_psf["median"],
             "median_psf_all": all_psf["median"],
             "stock_units": stock["total"],
+            "stock_matched": bool(stock["total"]),
             "turnover_per_1000_stock_12m": round(1000 * p["recent_12m_transactions"] / stock["total"], 1) if stock["total"] else None,
+            "lease_expiry": lease.get("lease_expiry"),
+            "lease_expiry_decade": lease.get("lease_expiry_decade"),
+            "enbloc_indicator": lease.get("enbloc_indicator"),
             "has_nonlanded_activity": bool(p["nonlanded_transactions"]),
             "dominant_property_type": p["property_types"].most_common(1)[0][0] if p["property_types"] else None,
             "property_type_mix": dict(p["property_types"].most_common()),
             "sale_type_mix": dict(p["sale_types"].most_common()),
         })
     stock_adjusted_segment = defaultdict(lambda: {"stock_units": 0, "recent_12m_transactions": 0, "matched_projects": 0})
+    stock_adjusted_area = defaultdict(lambda: {"stock_units": 0, "recent_12m_transactions": 0, "matched_projects": 0, "segment": "Unknown"})
+    stock_match_rates = defaultdict(lambda: {"projects": 0, "matched_projects": 0, "recent_12m_transactions": 0, "matched_recent_12m_transactions": 0})
     for row in project_rows:
         seg = row["segment"] or "Unknown"
+        prop = row["dominant_property_type"] or "Unknown"
+        for key in (("segment", seg), ("property_type", prop)):
+            stock_match_rates[key]["projects"] += 1
+            stock_match_rates[key]["recent_12m_transactions"] += row["recent_12m_transactions"] or 0
+            if row["stock_units"]:
+                stock_match_rates[key]["matched_projects"] += 1
+                stock_match_rates[key]["matched_recent_12m_transactions"] += row["recent_12m_transactions"] or 0
         if not row["stock_units"] or not row["has_nonlanded_activity"]:
             continue
         stock_adjusted_segment[seg]["stock_units"] += row["stock_units"]
         stock_adjusted_segment[seg]["recent_12m_transactions"] += row["recent_12m_transactions"] or 0
         stock_adjusted_segment[seg]["matched_projects"] += 1
+        area = row["planning_area"] or "Unknown"
+        stock_adjusted_area[area]["stock_units"] += row["stock_units"]
+        stock_adjusted_area[area]["recent_12m_transactions"] += row["recent_12m_transactions"] or 0
+        stock_adjusted_area[area]["matched_projects"] += 1
+        stock_adjusted_area[area]["segment"] = seg
 
     stock_adjusted_segment_rows = []
     for seg in [ALL, *SEGMENTS]:
@@ -303,6 +340,37 @@ def main():
         key=lambda x: (x["turnover_per_1000_stock_12m"], x["recent_12m_transactions"], x["stock_units"]),
         reverse=True,
     )[:50]
+
+    planning_area_liquidity = []
+    for area, vals in stock_adjusted_area.items():
+        stock_units = vals["stock_units"]
+        recent_tx = vals["recent_12m_transactions"]
+        planning_area_liquidity.append({
+            "planning_area": area,
+            "segment": vals["segment"],
+            "stock_units": stock_units,
+            "recent_12m_transactions": recent_tx,
+            "matched_projects": vals["matched_projects"],
+            "turnover_per_1000_stock_12m": round(1000 * recent_tx / stock_units, 1) if stock_units else None,
+        })
+    planning_area_liquidity.sort(key=lambda x: (x["turnover_per_1000_stock_12m"] or 0, x["recent_12m_transactions"]), reverse=True)
+
+    stock_match_rate_rows = []
+    for (dimension, value), vals in sorted(stock_match_rates.items()):
+        stock_match_rate_rows.append({
+            "dimension": dimension,
+            "value": value,
+            **vals,
+            "project_match_rate": round(vals["matched_projects"] / vals["projects"], 4) if vals["projects"] else None,
+            "recent_tx_match_rate": round(vals["matched_recent_12m_transactions"] / vals["recent_12m_transactions"], 4) if vals["recent_12m_transactions"] else None,
+        })
+
+    lease_area_decades = defaultdict(lambda: {"units": 0, "projects": 0})
+    for row in project_rows:
+        if row.get("lease_expiry_decade") and row.get("stock_units"):
+            key = (row.get("lease_expiry_decade"), row.get("planning_area") or "Unknown")
+            lease_area_decades[key]["units"] += row["stock_units"]
+            lease_area_decades[key]["projects"] += 1
 
     project_rows.sort(key=lambda x: (x["recent_12m_transactions"], x["stock_units"]), reverse=True)
     # Keep enough for a screener, but still aggregated and lightweight.
@@ -396,6 +464,7 @@ def main():
         "stock_adjusted_activity": {
             "segment_turnover_summary": stock_adjusted_segment_rows,
             "top_project_turnover_leaders": project_turnover_leaders,
+            "planning_area_liquidity": planning_area_liquidity[:80],
         },
         "lease_expiry": {
             "by_decade": [
@@ -404,7 +473,23 @@ def main():
             ],
             "projects": expiry_projects[:500],
             "top_projects": sorted(expiry_projects, key=lambda x: x["units"], reverse=True)[:300],
+            "by_decade_area": [
+                {"decade": decade, "planning_area": area, **vals}
+                for (decade, area), vals in sorted(lease_area_decades.items(), key=lambda kv: (int(kv[0][0][:4]), -kv[1]["units"]))
+            ][:500],
         },
+    }
+
+    qa = {
+        "fake_project_rows_excluded": dict(fake_project_rows.most_common()),
+        "project_screener_rows": len(project_rows),
+        "project_screener_rows_with_stock": sum(1 for r in project_rows if r["stock_units"]),
+        "project_screener_rows_without_stock": sum(1 for r in project_rows if not r["stock_units"]),
+        "zero_stock_high_volume_projects": [
+            {"project": r["project"], "recent_12m_transactions": r["recent_12m_transactions"], "planning_area": r["planning_area"], "dominant_property_type": r["dominant_property_type"]}
+            for r in sorted((r for r in project_rows if not r["stock_units"] and r["recent_12m_transactions"] >= 100), key=lambda x: x["recent_12m_transactions"], reverse=True)[:50]
+        ],
+        "stock_match_rates": stock_match_rate_rows,
     }
 
     metadata = {
@@ -428,6 +513,7 @@ def main():
 
     (OUT_DIR / "dashboard-data.json").write_text(json.dumps(dashboard, separators=(",", ":")), encoding="utf-8")
     (OUT_DIR / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    (OUT_DIR / "dashboard-qa.json").write_text(json.dumps(qa, indent=2), encoding="utf-8")
     print(json.dumps({
         "ok": True,
         "rows": total_rows,

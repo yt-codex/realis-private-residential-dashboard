@@ -30,6 +30,17 @@
       <label>Project search
         <input id="projectSearch" placeholder="e.g. Lentor, Mayfair, Treasures" />
       </label>
+      <label>Project universe
+        <select id="projectUniverse">
+          <option value="all">All projects</option>
+          <option value="stock">Stock-matched non-landed</option>
+          <option value="launches">Recent launches / zero-stock</option>
+          <option value="leasehold">99-year leasehold matched</option>
+        </select>
+      </label>
+      <div class="control-actions">
+        <button type="button" id="resetFilters" class="secondary-btn">Reset filters</button>
+      </div>
     </section>
 
     <section class="card muted" id="filterNotice" hidden></section>
@@ -47,7 +58,7 @@
     <section class="grid two tab-panel" data-tab="market">
       <div class="card">
         <div class="section-head"><h2>Price & liquidity trend</h2><p>Monthly median PSF and transaction volume</p></div>
-        <canvas id="trendChart" height="240"></canvas>
+        <div class="chart-wrap"><canvas id="trendChart" height="240"></canvas><div id="chartTooltip" class="chart-tooltip" hidden></div></div>
       </div>
       <div class="card">
         <div class="section-head"><h2>Segment view</h2><p>CCR / RCR / OCR transaction share and median PSF</p></div>
@@ -62,6 +73,7 @@
       </div>
       <div class="card">
         <div class="section-head"><h2>Stock-adjusted segment activity</h2><p>12-month transactions per 1,000 active stock units</p></div>
+        <p class="small-note">Uses matched active completed non-landed stock only; new/uncompleted launches can have transaction volume but no stock denominator yet.</p>
         <div id="segmentTurnover" class="table-wrap"></div>
       </div>
     </section>
@@ -78,6 +90,11 @@
       <div id="areaRanking" class="table-wrap"></div>
     </section>
 
+    <section class="card tab-panel" data-tab="projects">
+      <div class="section-head"><h2>Stock-adjusted planning area liquidity</h2><p>12-month matched transactions per 1,000 active stock units</p></div>
+      <div id="areaLiquidity" class="table-wrap"></div>
+    </section>
+
     <section class="grid two tab-panel" data-tab="projects">
       <div class="card">
         <div class="section-head"><h2>Top filtered turnover leaders</h2><p>Highest turnover intensity inside the current project filter</p></div>
@@ -91,7 +108,15 @@
 
     <section class="card tab-panel" data-tab="projects">
       <div class="section-head"><h2>Project screener</h2><p>Aggregated project metrics only — no address-level rows loaded</p></div>
+      <div class="table-tools">
+        <label>Rows
+          <select id="projectPageSize"><option>25</option><option>50</option><option>100</option></select>
+        </label>
+        <button type="button" class="secondary-btn" data-download="projects">Download filtered projects CSV</button>
+      </div>
       <div id="projectTable" class="table-wrap"></div>
+      <div id="projectPager" class="pager"></div>
+      <div id="projectDetail" class="detail-panel" hidden></div>
     </section>
 
     <section class="grid two tab-panel" data-tab="leasehold" data-global-only="true">
@@ -103,12 +128,20 @@
 
     <section class="card tab-panel" data-tab="leasehold" data-global-only="true">
       <div class="section-head"><h2>99-year expiry cohort projects</h2><p>Largest active non-landed projects by lease-expiry cohort</p></div>
+      <div class="table-tools"><button type="button" class="secondary-btn" data-download="leasehold">Download leasehold cohorts CSV</button></div>
       <div id="expiryProjectTable" class="table-wrap"></div>
     </section>
 
+    <section class="card tab-panel" data-tab="leasehold" data-global-only="true">
+      <div class="section-head"><h2>Leasehold risk by planning area</h2><p>Matched 99-year leasehold units by expiry decade and planning area</p></div>
+      <div id="leaseAreaTable" class="table-wrap"></div>
+    </section>
+
     <section class="card muted">
-      <h2>Methodology notes</h2>
-      <ul id="methodology"></ul>
+      <details id="methodologyDrawer" open>
+        <summary><h2>Methodology notes and data limitations</h2></summary>
+        <ul id="methodology"></ul>
+      </details>
     </section>
   </main>
 

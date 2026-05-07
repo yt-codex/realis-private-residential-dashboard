@@ -1,0 +1,258 @@
+{
+  "fake_project_rows_excluded": {
+    "N.A.": 26177
+  },
+  "project_screener_rows": 2000,
+  "project_screener_rows_with_stock": 1684,
+  "project_screener_rows_without_stock": 316,
+  "zero_stock_high_volume_projects": [
+    {
+      "project": "Springleaf Residence",
+      "recent_12m_transactions": 912,
+      "planning_area": "Yishun",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Skye At Holland",
+      "recent_12m_transactions": 665,
+      "planning_area": "Queenstown",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Zyon Grand",
+      "recent_12m_transactions": 624,
+      "planning_area": "Bukit Merah",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "One Marina Gardens",
+      "recent_12m_transactions": 593,
+      "planning_area": "Marina South",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Coastal Cabana",
+      "recent_12m_transactions": 593,
+      "planning_area": "Pasir Ris",
+      "dominant_property_type": "Executive Condominium"
+    },
+    {
+      "project": "Otto Place",
+      "recent_12m_transactions": 591,
+      "planning_area": "Tengah",
+      "dominant_property_type": "Executive Condominium"
+    },
+    {
+      "project": "Pinery Residences",
+      "recent_12m_transactions": 541,
+      "planning_area": "Tampines",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Rivelle Tampines",
+      "recent_12m_transactions": 530,
+      "planning_area": "Tampines",
+      "dominant_property_type": "Executive Condominium"
+    },
+    {
+      "project": "River Green",
+      "recent_12m_transactions": 486,
+      "planning_area": "River Valley",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Penrith",
+      "recent_12m_transactions": 450,
+      "planning_area": "Queenstown",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Promenade Peak",
+      "recent_12m_transactions": 415,
+      "planning_area": "Bukit Merah",
+      "dominant_property_type": "Condominium"
+    },
+    {
+      "project": "River Modern",
+      "recent_12m_transactions": 410,
+      "planning_area": "River Valley",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Faber Residence",
+      "recent_12m_transactions": 374,
+      "planning_area": "Clementi",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Lyndenwoods",
+      "recent_12m_transactions": 342,
+      "planning_area": "Queenstown",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Canberra Crescent Residences",
+      "recent_12m_transactions": 322,
+      "planning_area": "Sembawang",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Bloomsbury Residences",
+      "recent_12m_transactions": 285,
+      "planning_area": "Queenstown",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Upperhouse At Orchard Boulevard",
+      "recent_12m_transactions": 237,
+      "planning_area": "River Valley",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "The Robertson Opus",
+      "recent_12m_transactions": 202,
+      "planning_area": "Singapore River",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Newport Residences",
+      "recent_12m_transactions": 184,
+      "planning_area": "Downtown Core",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Grand Dunman",
+      "recent_12m_transactions": 150,
+      "planning_area": "Marine Parade",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "The Continuum",
+      "recent_12m_transactions": 147,
+      "planning_area": "Geylang",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Narra Residences",
+      "recent_12m_transactions": 142,
+      "planning_area": "Bukit Panjang",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "Nava Grove",
+      "recent_12m_transactions": 110,
+      "planning_area": "Bukit Timah",
+      "dominant_property_type": "Condominium"
+    },
+    {
+      "project": "Parktown Residence",
+      "recent_12m_transactions": 108,
+      "planning_area": "Tampines",
+      "dominant_property_type": "Apartment"
+    },
+    {
+      "project": "The Sen",
+      "recent_12m_transactions": 106,
+      "planning_area": "Bukit Timah",
+      "dominant_property_type": "Condominium"
+    },
+    {
+      "project": "Chuan Park",
+      "recent_12m_transactions": 102,
+      "planning_area": "Serangoon",
+      "dominant_property_type": "Condominium"
+    }
+  ],
+  "stock_match_rates": [
+    {
+      "dimension": "property_type",
+      "value": "Apartment",
+      "projects": 2045,
+      "matched_projects": 1491,
+      "recent_12m_transactions": 13367,
+      "matched_recent_12m_transactions": 5277,
+      "project_match_rate": 0.7291,
+      "recent_tx_match_rate": 0.3948
+    },
+    {
+      "dimension": "property_type",
+      "value": "Condominium",
+      "projects": 946,
+      "matched_projects": 764,
+      "recent_12m_transactions": 8798,
+      "matched_recent_12m_transactions": 7446,
+      "project_match_rate": 0.8076,
+      "recent_tx_match_rate": 0.8463
+    },
+    {
+      "dimension": "property_type",
+      "value": "Detached House",
+      "projects": 97,
+      "matched_projects": 0,
+      "recent_12m_transactions": 63,
+      "matched_recent_12m_transactions": 0,
+      "project_match_rate": 0.0,
+      "recent_tx_match_rate": 0.0
+    },
+    {
+      "dimension": "property_type",
+      "value": "Executive Condominium",
+      "projects": 82,
+      "matched_projects": 76,
+      "recent_12m_transactions": 3745,
+      "matched_recent_12m_transactions": 1856,
+      "project_match_rate": 0.9268,
+      "recent_tx_match_rate": 0.4956
+    },
+    {
+      "dimension": "property_type",
+      "value": "Semi-Detached House",
+      "projects": 191,
+      "matched_projects": 2,
+      "recent_12m_transactions": 388,
+      "matched_recent_12m_transactions": 7,
+      "project_match_rate": 0.0105,
+      "recent_tx_match_rate": 0.018
+    },
+    {
+      "dimension": "property_type",
+      "value": "Terrace House",
+      "projects": 502,
+      "matched_projects": 7,
+      "recent_12m_transactions": 989,
+      "matched_recent_12m_transactions": 69,
+      "project_match_rate": 0.0139,
+      "recent_tx_match_rate": 0.0698
+    },
+    {
+      "dimension": "segment",
+      "value": "CCR",
+      "projects": 1118,
+      "matched_projects": 688,
+      "recent_12m_transactions": 4809,
+      "matched_recent_12m_transactions": 2294,
+      "project_match_rate": 0.6154,
+      "recent_tx_match_rate": 0.477
+    },
+    {
+      "dimension": "segment",
+      "value": "OCR",
+      "projects": 1483,
+      "matched_projects": 794,
+      "recent_12m_transactions": 14223,
+      "matched_recent_12m_transactions": 8092,
+      "project_match_rate": 0.5354,
+      "recent_tx_match_rate": 0.5689
+    },
+    {
+      "dimension": "segment",
+      "value": "RCR",
+      "projects": 1262,
+      "matched_projects": 858,
+      "recent_12m_transactions": 8318,
+      "matched_recent_12m_transactions": 4269,
+      "project_match_rate": 0.6799,
+      "recent_tx_match_rate": 0.5132
+    }
+  ]
+}
